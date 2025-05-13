@@ -1,0 +1,19 @@
+.env*
+venv/
+__pycache__/
+*.pyc
+
+
+
+# Env files
+.env
+.env.txt
+
+
+# IDEs
+.vscode/
+.DS_Store
+
+fla\
+igrate
+

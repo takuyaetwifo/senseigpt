@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>全ユーザー履歴</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="header">
+    管理者: {{ admin }} さん |
+    <a href="/logout">ログアウト</a>
+  </div>
+
+  <h2>全ユーザーのチャット履歴</h2>
+  {% for row in rows %}
+    <div class="message gpt">
+      <p><strong>ユーザーID:</strong> {{ row[0] }} / {{ row[3] }}</p>
+      <p><strong>質問:</strong> {{ row[1] }}</p>
+      <p><strong>回答:</strong> {{ row[2] }}</p>
+    </div>
+  {% endfor %}
+</body>
+</html>

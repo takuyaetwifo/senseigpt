@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+<h2 style="display: flex;align-items: center; gap: 20px;">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<head><title>ログイン</title></head>
+<body>
+<h2>ログイン</h2>
+<form method="post">
+  ユーザー名: <input type="text" name="username"><br>
+  パスワード: <input type="password" name="password"><br>
+  <input type="submit" value="ログイン">
+</form>
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+</body>
+</html>

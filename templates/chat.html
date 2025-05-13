@@ -1,0 +1,70 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+<h2 style="display: flex;align-items: center; gap: 20px;">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+      {% if user_icon %}
+    <img src="{{ url_for('static', filename='uploads/' ~ user_icon) }}" alt="アイコン" width="100" height="100" style="vertical-align: middle; border-radius: 50%;">
+      {% endif %}
+  せんせいGPT
+  <!--  <p>こんにちは、{{ username }}さん！</p>-->
+  {% if lesson %}
+    <span style="font-size: 16px; background-color: #eef; padding: 6px 10px; border-radius: 8px;">
+      📘 きょうのおべんきょう：{{ lesson }}
+    </span>
+  {% endif %}
+</h2>
+<!--
+  <title>せんせいGPT</title>
+-->
+
+  </head>
+<body>
+  <body style="background-color: {{ theme_color }};">
+  <div class="header">
+    ログイン中: {{ username }} さん |
+    <a href="{{ url_for('settings') }}">設定</a>
+    <a href="/logout">ログアウト</a>
+  </div>
+
+
+
+  <form method="POST" action="/chat">
+    <input type="text" name="message" required>
+    <button type="submit">送信</button>
+  </form>
+
+
+<form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
+  <button type="submit">履歴をすべて削除</button>
+</form>
+
+
+<div class="chat-log">
+{% if rows %}
+  <ul>
+    {% for row in rows %}
+      <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
+          <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response }}</div>
+    {% endfor %}
+  </ul>
+{% endif %}
+</div>
+<!--
+<div class="chat-log">
+  {% for i in range(messages|length // 2) %}
+    {% set user_msg = messages[-2 * (i + 1)] %}
+    {% set assistant_msg = messages[-2 * (i + 1) + 1] %}
+
+    <div class="message user"><strong>あなた:</strong><br>{{ user_msg.content }}</div>
+    <div class="message gpt"><strong>先生:</strong><br>{{ assistant_msg.content }}</div>
+  {% endfor %}
+</div>
+
+-->
+
+</body>
+</html>

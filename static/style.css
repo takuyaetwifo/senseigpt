@@ -1,0 +1,80 @@
+
+
+body {
+  font-family: "Segoe UI", "ヒラギノ角ゴ ProN", sans-serif;
+  background-color: #f5f8fa;
+  color: #333;
+  margin: 2em;
+}
+h2 {
+  color: #2c3e50;
+}
+form {
+  background: #fff;
+  padding: 1em;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  max-width: 400px;
+  margin: auto;
+}
+input[type="text"],
+input[type="password"] {
+  width: 90%;
+  padding: 0.5em;
+  margin-top: 0.2em;
+  margin-bottom: 1em;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.6em 1.2em;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #27ae60;
+}
+a {
+  color: #3498db;
+  text-decoration: none;
+  margin-left: 10px;
+}
+a:hover {
+  text-decoration: underline;
+}
+.header {
+  text-align: right;
+  margin-bottom: 1em;
+}
+.chat-log {
+  max-width: 700px;
+  margin: 1em auto;
+}
+.message {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 80%;
+  clear: both;
+}
+.gpt {
+  background-color: #dff9fb;
+  float: right;
+  text-align: left;
+}
+.user {
+  background-color: #f1f2f6;
+  float: left;
+  text-align: left;
+}
+.timestamp {
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 4px;
+  text-align: center;
+  clear: both;
+}
