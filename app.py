@@ -15,6 +15,7 @@ from models import User
 from werkzeug.security import generate_password_hash
 from models import ChatLog
 import pytz
+import re
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -39,6 +40,25 @@ NG_WORDS = [
 ]
 
 
+#def format_code_blocks(text):
+#    def replacer(match):
+#        lang = match.group(1) or ""
+#        code = match.group(2)
+#        return f"<pre><code class=\"language-{lang}\">{code}</code></pre>"
+#    return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
+
+
+def format_code_blocks(text):
+    def replacer(match):
+        lang = match.group(1) or ""
+        code = match.group(2)
+        return f'''
+<div class="code-container">
+  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>
+  <pre><code class="language-{lang}">{code}</code></pre>
+</div>
+'''
+    return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
 
 
 
@@ -89,6 +109,11 @@ def get_japanese_season(month: int) -> str:
         return "秋"
     else:
         return "冬"
+    
+    
+    
+    
+    
 
 @app.route("/chat", methods=["GET", "POST"])
 @login_required
@@ -144,6 +169,8 @@ def chat():
         messages.append({"role": "user", "content": user_input})    
         
 
+
+
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o",
@@ -152,14 +179,18 @@ def chat():
                 max_tokens=1000
             )
             main_reply = response.choices[0].message.content
+            
+            formatted_reply = format_code_blocks(main_reply)  # ← 追加
 
             # スタンプ処理
             STAMP_EMOJIS = ["🌟", "✨", "💯", "👏", "😊", "👍", "🎉", "🥳", "🤗", "🙌"]
             stamp_count = random.randint(2, 3)
             selected_stamps = random.sample(STAMP_EMOJIS, stamp_count)
             stamp_string = " ".join(selected_stamps)
+            
+            gpt_response = f"{formatted_reply}\n\n{stamp_string}"  # ← ここで使う
 
-            gpt_response = f"{main_reply}\n\n{stamp_string}"
+          #  gpt_response = f"{main_reply}\n\n{stamp_string}"
             messages.append({"role": "assistant", "content": gpt_response})
         except Exception as e:
             gpt_response = f"エラー: {e}"

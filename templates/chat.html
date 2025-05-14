@@ -4,6 +4,33 @@
 <html>
 <head>
   <meta charset="utf-8">
+
+  <!-- Prism.js（コード表示の整形用） -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" />
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+
+  
+
+
+
+  <script>
+function copyToClipboard(button) {
+  const code = button.nextElementSibling.querySelector("code");
+  if (!code) return;
+
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    button.textContent = "✅ コピーしました！";
+    setTimeout(() => {
+      button.textContent = "📋 コピー";
+    }, 1500);
+  });
+}
+</script>
+
+
+
 <h2 style="display: flex;align-items: center; gap: 20px;">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
       {% if user_icon %}
@@ -48,7 +75,7 @@
   <ul>
     {% for row in rows %}
       <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
-          <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response }}</div>
+          <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response | safe }}</div>
     {% endfor %}
   </ul>
 {% endif %}
