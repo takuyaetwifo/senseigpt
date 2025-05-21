@@ -84,6 +84,12 @@ a:hover {
 .code-container {
   position: relative;
 }
+.code-container pre {
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 1em;
+}
 
 .copy-btn {
   position: absolute;
@@ -99,4 +105,14 @@ a:hover {
 }
 .copy-btn:hover {
   opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .chat-log, form {
+    max-width: 98vw;
+    margin: 5vw auto;
+  }
+  .message {
+    max-width: 95vw;
+  }
 }

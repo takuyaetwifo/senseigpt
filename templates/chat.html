@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,88 +8,73 @@
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 
-  
-
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <script>
-function copyToClipboard(button) {
-  const code = button.nextElementSibling.querySelector("code");
-  if (!code) return;
+    function copyToClipboard(button) {
+      const code = button.nextElementSibling.querySelector("code");
+      if (!code) return;
 
-  const text = code.innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    button.textContent = "✅ コピーしました！";
-    setTimeout(() => {
-      button.textContent = "📋 コピー";
-    }, 1500);
-  });
-}
-</script>
+      const text = code.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        button.textContent = "✅ コピーしました！";
+        setTimeout(() => {
+          button.textContent = "📋 コピー";
+        }, 1500);
+      });
+    }
+  </script>
 
-
-
-<h2 style="display: flex;align-items: center; gap: 20px;">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-      {% if user_icon %}
-    <img src="{{ url_for('static', filename='uploads/' ~ user_icon) }}" alt="アイコン" width="100" height="100" style="vertical-align: middle; border-radius: 50%;">
-      {% endif %}
-  せんせいGPT
-  <!--  <p>こんにちは、{{ username }}さん！</p>-->
-  {% if lesson %}
-    <span style="font-size: 16px; background-color: #eef; padding: 6px 10px; border-radius: 8px;">
-      📘 きょうのおべんきょう：{{ lesson }}
-    </span>
-  {% endif %}
-</h2>
-<!--
   <title>せんせいGPT</title>
--->
+</head>
 
-  </head>
-<body>
-  <body style="background-color: {{ theme_color }};">
+<body style="background-color: {{ theme_color }};">
   <div class="header">
-    ログイン中: {{ username }} さん |
+    ログイン中: {{ display_name }} さん |
     <a href="{{ url_for('settings') }}">設定</a>
     <a href="/logout">ログアウト</a>
   </div>
 
+  {% if session['role'] == 'admin' %}
+  <a href="{{ url_for('admin_edit_profile', user_id=session['user_id']) }}">自分のプロフィール編集</a>
+  {% endif %}
 
+  <h2 style="display: flex;align-items: center; gap: 20px;">
+    {% if user_icon %}
+      <img src="{{ url_for('static', filename='uploads/' ~ user_icon) }}" alt="アイコン" width="100" height="100" style="vertical-align: middle; border-radius: 50%;">
+    {% endif %}
+    せんせいGPT
+    {% if lesson %}
+      <span style="font-size: 16px; background-color: #eef; padding: 6px 10px; border-radius: 8px;">
+        📘 きょうのおべんきょう：{{ lesson }}
+      </span>
+    {% endif %}
+  </h2>
+
+  {% if birthday_today %}
+  <div style="color: red; font-size: 1.2em; font-weight: bold;">
+    🎂 お誕生日おめでとうございます！素敵な1日になりますように 🎉
+  </div>
+  {% endif %}
 
   <form method="POST" action="/chat">
     <input type="text" name="message" required>
     <button type="submit">送信</button>
   </form>
 
+  <form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
+    <button type="submit">履歴をすべて削除</button>
+  </form>
 
-<form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
-  <button type="submit">履歴をすべて削除</button>
-</form>
-
-
-<div class="chat-log">
-{% if rows %}
-  <ul>
-    {% for row in rows %}
-      <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
+  <div class="chat-log">
+    {% if rows %}
+      <ul>
+        {% for row in rows %}
+          <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
           <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response | safe }}</div>
-    {% endfor %}
-  </ul>
-{% endif %}
-</div>
-<!--
-<div class="chat-log">
-  {% for i in range(messages|length // 2) %}
-    {% set user_msg = messages[-2 * (i + 1)] %}
-    {% set assistant_msg = messages[-2 * (i + 1) + 1] %}
-
-    <div class="message user"><strong>あなた:</strong><br>{{ user_msg.content }}</div>
-    <div class="message gpt"><strong>先生:</strong><br>{{ assistant_msg.content }}</div>
-  {% endfor %}
-</div>
-
--->
-
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
 </body>
 </html>

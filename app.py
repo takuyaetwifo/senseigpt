@@ -112,7 +112,8 @@ def get_japanese_season(month: int) -> str:
     
     
     
-    
+
+
     
 
 @app.route("/chat", methods=["GET", "POST"])
@@ -137,14 +138,69 @@ def chat():
         greeting = "こんにちは"
     else:
         greeting = "こんばんは"
-
+    
+    
     username = session["username"]
-    greeting_message = f"{greeting}、{username}さん！"
+   # greeting_message = f"{greeting}、{username}さん！"
+    
+    user = db.session.get(User, session["user_id"])
+    display_name = user.display_name or user.username
+    greeting_message = f"{greeting}、{display_name}さん！"
+    
+    #user = User.query.get(session["user_id"])
+    admin = User.query.filter_by(role="admin").first()  # 管理者の家族状況
+    # 誕生日判定
+    birthday_today = False
+    if user.birthday:
+        today = now.date()
+        birthday_date = user.birthday.replace(year=today.year)
+        birthday_today = birthday_date == today
 
-    messages = [{
-        "role": "system",
-        "content": f"{greeting_message} 今日は{date_str}、{season}です。現在の時刻は{time_str}です。あなたは子どもにやさしく教えるAI先生です。"
-    }]
+    profile_text = (
+        f"誕生日：{user.birthday if user.birthday else '未設定'}、"
+        f"趣味：{user.hobbies if user.hobbies else '未設定'}、"
+        f"プロフィール：{user.profile if user.profile else '未設定'}。"
+    )
+
+
+    
+    if birthday_today:
+        birthday_note = f"今日は{user.name}さんのお誕生日です。お祝いの気持ちを込めて、やさしく明るく話してください。"
+    else:
+        birthday_note = ""
+        
+    family_text = f"家族の状況：{admin.family_status if admin and hasattr(admin, 'family_status') else ''}"
+    system_prompt = f"{profile_text} {family_text} あなたは子どもにやさしく教えるAI先生です。"
+
+
+
+   
+    system_prompt = (
+        f"{greeting_message} 今日は{date_str}、{season}です。"
+        f"現在の時刻は{time_str}です。"
+        f"{profile_text} "
+        f"{family_text} "
+        f"{birthday_note} "
+        "あなたは子どもにやさしく教えるAI先生です。"
+    )
+
+
+
+
+
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    print(messages)
+# 出力例 [{'role': 'system', 'content': '家族全体の状況：家族全員が風邪をひいています。 ...'}]
+
+
+    #messages = [{
+    #    "role": "system",
+    #    "content": f"{greeting_message} 今日は{date_str}、{season}です。現在の時刻は{time_str}です。あなたは子どもにやさしく教えるAI先生です。"
+    #}]
+    
+    
 
     #history = ChatLog.query.filter_by(user_id=session["user_id"]).order_by(ChatLog.id.asc()).limit(10).all()
     #for row in history:
@@ -209,11 +265,13 @@ def chat():
     return render_template(
         "chat.html",
         username=username,
+        display_name=display_name,
         rows=rows,
         lesson=lesson,
         messages=messages,
         theme_color=user.theme_color,
-        user_icon=user.character_icon
+        user_icon=user.character_icon,
+        birthday_today=birthday_today  # ← 追加
     )
 
 
@@ -255,6 +313,8 @@ def settings():
 
     if request.method == "POST":
         user.theme_color = request.form["theme_color"]
+        user.hobbies = request.form["hobbies"]  # ← 追加
+        user.profile = request.form["profile"]  # ← 追加
 
         if "icon_file" in request.files:
             file = request.files["icon_file"]
@@ -267,10 +327,14 @@ def settings():
         db.session.commit()
         return redirect(url_for("chat"))
 
+    # ★↓↓↓↓↓↓ここを必ず修正
     return render_template("settings.html",
-                           username=user.username,
-                           current_color=user.theme_color,
-                           current_icon=user.character_icon)
+        user=user,
+        username=user.username,
+        current_color=user.theme_color,
+        current_icon=user.character_icon
+    )
+
 
 
 
@@ -349,7 +413,27 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+@app.route("/admin/edit_profile/<int:user_id>", methods=["GET", "POST"])
+@login_required
+def admin_edit_profile(user_id):
+    # 管理者判定（roleカラムが"admin"の場合だけ許可）
+    if session.get("role") != "admin":
+        return "権限がありません", 403
 
+    user = User.query.get(user_id)
+    if not user:
+        return "ユーザーが見つかりません", 404
+
+    if request.method == "POST":
+        user.birthday = request.form["birthday"] or None
+        user.hobbies = request.form["hobbies"]
+        user.profile = request.form["profile"]
+        user.background = request.form["background"]
+        user.family_status = request.form["family_status"]
+        db.session.commit()
+        return redirect(url_for("admin_edit_profile", user_id=user_id))  # ←エンドポイント名は関数名
+
+    return render_template("admin_edit_profile.html", user=user)
 
 
 
