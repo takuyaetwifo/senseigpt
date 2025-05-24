@@ -12,6 +12,7 @@ RUN curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.18.
   && unzip voicevox_engine-linux-x64-cpu-0.18.1.zip -d /opt/voicevox_engine \
   && chmod +x /opt/voicevox_engine/run.sh
 
+
 # アプリ全体
 COPY . /app
 
