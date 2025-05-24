@@ -1,5 +1,5 @@
 
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, send_file,session
 from models import db
 from config import Config
 from datetime import datetime
@@ -16,6 +16,11 @@ from werkzeug.security import generate_password_hash
 from models import ChatLog
 import pytz
 import re
+import requests
+import io
+
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -74,6 +79,36 @@ def login_required(f):
 #@app.before_first_request
 #def create_tables():
 #    db.create_all()
+@app.route("/voice", methods=["POST"])
+def voice():
+    data = request.json
+    text = data.get("text", "")
+    speaker = data.get("speaker", 3)  # 3=ずんだもん
+
+    # VOICEVOX audio_query
+    query_response = requests.post(
+        "http://localhost:50021/audio_query",
+        params={"text": text, "speaker": speaker}
+    )
+    query_response.raise_for_status()
+    query = query_response.json()
+
+    # VOICEVOX synthesis
+    synth_response = requests.post(
+        "http://localhost:50021/synthesis",
+        params={"speaker": speaker},
+        json=query
+    )
+    synth_response.raise_for_status()
+
+    # バイト配列をメモリ上でwavファイルとして返却
+    return send_file(
+        io.BytesIO(synth_response.content),
+        mimetype="audio/wav",
+        as_attachment=False,
+        download_name="zundamon.wav"
+    )
+
 
 @app.route("/")
 def index():

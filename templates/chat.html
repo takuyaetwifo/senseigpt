@@ -10,20 +10,7 @@
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-  <script>
-    function copyToClipboard(button) {
-      const code = button.nextElementSibling.querySelector("code");
-      if (!code) return;
 
-      const text = code.innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        button.textContent = "✅ コピーしました！";
-        setTimeout(() => {
-          button.textContent = "📋 コピー";
-        }, 1500);
-      });
-    }
-  </script>
 
   <title>せんせいGPT</title>
 </head>
@@ -57,14 +44,22 @@
   </div>
   {% endif %}
 
-  <form method="POST" action="/chat">
-    <input type="text" name="message" required>
-    <button type="submit">送信</button>
-  </form>
+
+
+<form method="POST" action="/chat" onsubmit="return handleSend(this);">
+  <input type="text" name="message" required>
+  <button type="submit" id="sendBtn">送信</button>
+  <button id="voice-toggle" type="button" style="margin: 8px 0; font-size: 0.8em;">🔊 音声ON</button>
+  
+
+</form>
+
 
   <form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
     <button type="submit">履歴をすべて削除</button>
   </form>
+
+<audio id="zundamon-audio"></audio>
 
   <div class="chat-log">
     {% if rows %}
@@ -76,5 +71,133 @@
       </ul>
     {% endif %}
   </div>
+
+<script>
+function copyToClipboard(button) {
+  const code = button.nextElementSibling.querySelector("code");
+  if (!code) return;
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    button.textContent = "✅ コピーしました！";
+    setTimeout(() => {
+      button.textContent = "📋 コピー";
+    }, 1500);
+  });
+}
+
+// 連続送信防止＋ローディングアイコン
+function handleSend(form) {
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.innerHTML = '送信中… <span class="loader"></span>';
+  return true;
+}
+</script>
+
+
+
+
+
+<script>
+let voiceEnabled = true;  // デフォルトON
+
+document.getElementById('voice-toggle').onclick = function() {
+  voiceEnabled = !voiceEnabled;
+  this.textContent = voiceEnabled ? "🔊 音声ON" : "🔇 音声OFF";
+};
+
+function playVoiceAuto(text) {
+  if (voiceEnabled) {
+    playVoice(text);
+  }
+}
+
+function playVoice(text) {
+  fetch('/voice', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: text})
+  })
+  .then(response => response.blob())
+  .then(blob => {
+    const url = URL.createObjectURL(blob);
+    const audio = document.getElementById("zundamon-audio");
+    audio.src = url;
+    audio.play();
+  });
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  const gptMessages = document.querySelectorAll('.message.gpt');
+  if (gptMessages.length > 0) {
+    const first = gptMessages[0];
+    let firstText = first.innerText
+      .replace(/^先生:\s*/, "")
+      .replace(/📋 コピー.*/,"")
+      .replace(/\n+/g, " ")
+      .trim();
+    playVoiceAuto(firstText);
+  }
+});
+
+
+</script>
+
+<!--
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+  // 1. localStorageから状態取得（初回はON）
+  let voiceEnabled = localStorage.getItem('voiceEnabled');
+  if (voiceEnabled === null) {
+    voiceEnabled = "true";
+    localStorage.setItem('voiceEnabled', "true");
+  }
+  voiceEnabled = (voiceEnabled === "true");
+
+  // 2. ボタン表示を必ずlocalStorageに合わせる（ここが重要！）
+  const voiceToggleBtn = document.getElementById('voice-toggle');
+  if (voiceToggleBtn) {
+    // localStorageの値を毎回反映
+    voiceToggleBtn.textContent = voiceEnabled ? "🔊 音声ON" : "🔇 音声OFF";
+    // 切り替えた時も反映
+    voiceToggleBtn.onclick = function() {
+      voiceEnabled = !voiceEnabled;
+      localStorage.setItem('voiceEnabled', voiceEnabled ? "true" : "false");
+      this.textContent = voiceEnabled ? "🔊 音声ON" : "🔇 音声OFF";
+    };
+  }
+
+  // 3. 音声自動再生もONのときだけ
+  const gptMessages = document.querySelectorAll('.message.gpt');
+  if (gptMessages.length > 0 && voiceEnabled) {
+    const first = gptMessages[0];
+    let firstText = first.innerText
+      .replace(/^先生:\s*/, "")
+      .replace(/📋 コピー.*/,"")
+      .replace(/\n+/g, " ")
+      .trim();
+    playVoice(firstText);
+  }
+
+  function playVoice(text) {
+    fetch('/voice', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: text})
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const audio = document.getElementById("zundamon-audio");
+      audio.src = url;
+      audio.play();
+    });
+  }
+});
+</script>
+-->
+
+
+
 </body>
 </html>

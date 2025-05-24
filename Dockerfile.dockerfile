@@ -1,0 +1,24 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# FlaskなどPython依存
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# VOICEVOX Engine (CPU版) をDLして展開
+RUN apt-get update && apt-get install -y curl unzip
+RUN curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.18.1/voicevox_engine-linux-x64-cpu-0.18.1.zip \
+  && unzip voicevox_engine-linux-x64-cpu-0.18.1.zip -d /opt/voicevox_engine
+
+# アプリ全体
+COPY . /app
+
+# スタートアップスクリプト
+COPY start.sh /app
+RUN chmod +x /app/start.sh
+
+EXPOSE 5000
+EXPOSE 50021
+
+CMD ["/app/start.sh"]
