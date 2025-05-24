@@ -52,17 +52,19 @@
   <button type="submit" id="sendBtn" style="padding: 12px 24px; font-size: 1.1em; border-radius: 10px; background: #3399ff; color: #fff; border: none;">送信</button>
 </form> 
 
-<!-- 音声テスト用ボタン＋audio要素を追加 -->
-<div style="margin: 24px 0; display: none;">
-  <button onclick="playVoice('こんにちは、テスト音声です')">音声テスト（OpenAI）</button>
-  <audio id="zundamon-audio"></audio>
-</div>
+
+<!-- 音声テスト用ボタン（画面には出さない） -->
+<button id="voiceTestBtn" hidden onclick="playVoice('こんにちは、テスト音声です')">音声テスト（OpenAI）</button>
+<!-- audioタグはhiddenで。display:noneはNG -->
+<audio id="zundamon-audio" hidden></audio>
+
+
 
 <script>
 window.addEventListener('DOMContentLoaded', function() {
+  // チャットの最新返答の自動再生
   const gptMessages = document.querySelectorAll('.message.gpt');
   if (gptMessages.length > 0) {
-    // 最新の返答メッセージを取得（通常は一番下が最新）
     const first = gptMessages[0];
     let firstText = first.innerText
       .replace(/^先生:\s*/, "")
@@ -71,11 +73,13 @@ window.addEventListener('DOMContentLoaded', function() {
       .trim();
     playVoice(firstText);
   }
+
+  // iPadで自動再生が効かない場合、初回だけユーザー操作を要求する
+  // → もし「再生されない！」となった場合は、下記のように案内文＋ボタン表示に切り替えもできます
+  // document.getElementById('voiceTestBtn').hidden = false;
 });
 
-
-
- function playVoice(text) {
+function playVoice(text) {
   fetch('/voice_openai', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -88,9 +92,9 @@ window.addEventListener('DOMContentLoaded', function() {
     audio.src = url;
     audio.play();
   });
-}  
-
+}
 </script>
+
 
 
 
