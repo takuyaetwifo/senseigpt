@@ -5,9 +5,12 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-RUN apt-get update && apt-get install -y curl unzip
+RUN apt-get update && apt-get install -y curl p7zip-full
 RUN curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.23.0/voicevox_engine-linux-cpu-x64-0.23.0.7z.001 \
-  && unzip voicevox_engine-linux-cpu-x64-0.23.0.7z.001 -d /app/voicevox_engine \
+  && curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.23.0/voicevox_engine-linux-cpu-x64-0.23.0.7z.002 \
+  && curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.23.0/voicevox_engine-linux-cpu-x64-0.23.0.7z.003 \
+  && curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.23.0/voicevox_engine-linux-cpu-x64-0.23.0.7z.004 \
+  && 7z x voicevox_engine-linux-cpu-x64-0.23.0.7z.001 -o/app/voicevox_engine \
   && chmod +x /app/voicevox_engine/run.sh
 
 COPY . /app
