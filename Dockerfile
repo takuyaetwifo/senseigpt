@@ -8,11 +8,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # VOICEVOX Engine (CPU版) をDLして展開
 RUN apt-get update && apt-get install -y curl unzip
-RUN mkdir -p /opt/voicevox_engine
+RUN mkdir -p /app/voicevox_engine
 RUN curl -LO https://github.com/VOICEVOX/voicevox_engine/releases/download/0.18.1/voicevox_engine-linux-x64-cpu-0.18.1.zip \
-  && unzip voicevox_engine-linux-x64-cpu-0.18.1.zip -d /opt/voicevox_engine \
-  && chmod +x /opt/voicevox_engine/run.sh
-
+  && unzip voicevox_engine-linux-x64-cpu-0.18.1.zip -d /app/voicevox_engine \
+  && chmod +x /app/voicevox_engine/run.sh
 
 # アプリ全体
 COPY . /app
