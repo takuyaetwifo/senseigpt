@@ -47,11 +47,33 @@
 
 
 
- <form method="POST" action="/chat" onsubmit="return handleSend(this);" style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-  <input type="text" name="message" required style="flex:1; min-width: 160px; font-size: 1.1em; padding: 10px; border-radius: 10px; border: 1px solid #ccc;">
-  <button type="submit" id="sendBtn" style="padding: 12px 24px; font-size: 1.1em; border-radius: 10px; background: #3399ff; color: #fff; border: none;">送信</button>
-</form> 
 
+<form method="POST" action="/chat" onsubmit="return handleSend(this);" style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+  <input type="text" name="message" required style="flex:1; min-width: 120px; font-size: 1.1em; padding: 10px; border-radius: 10px; border: 1px solid #ccc;">
+  <button type="submit" id="sendBtn" style="padding: 10px 20px; font-size: 1.05em; border-radius: 10px; background: #3399ff; color: #fff; border: none;">送信</button>
+  <button
+    type="button"
+    id="latest-voice-btn"
+    style="
+      padding: 9px 18px;
+      font-size: 1.05em;
+      border-radius: 50px;
+      background: linear-gradient(90deg, #27ae60 70%, #2ecc71 100%);
+      color: #fff;
+      border: none;
+      box-shadow: 0 1px 6px rgba(34, 139, 34, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    "
+    onclick="playLatestVoice()"
+  >
+    <span style="font-size:1.25em;">▶️</span>
+    <span style="font-size:0.98em;">音声で聞く</span>
+  </button>
+</form>
+<audio id="zundamon-audio" hidden></audio>
 
 <!-- 音声テスト用ボタン（画面には出さない） -->
 <button id="voiceTestBtn" hidden onclick="playVoice('こんにちは、テスト音声です')">音声テスト（OpenAI）</button>
@@ -59,6 +81,37 @@
 <audio id="zundamon-audio" hidden></audio>
 
 
+<script>
+function playLatestVoice() {
+  // 最新（最初）の先生メッセージを取得
+  const gptMessages = document.querySelectorAll('.message.gpt');
+  if (gptMessages.length === 0) return;
+  // 一番上が最新なので[0]
+  const first = gptMessages[0];
+  // テキスト整形
+  let firstText = first.innerText
+    .replace(/^先生:\s*/, "")
+    .replace(/📋 コピー.*/, "")
+    .replace(/\n+/g, " ")
+    .trim();
+  playVoice(firstText);
+}
+
+function playVoice(text) {
+  fetch('/voice_openai', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: text})
+  })
+  .then(res => res.blob())
+  .then(blob => {
+    const url = URL.createObjectURL(blob);
+    const audio = document.getElementById("zundamon-audio");
+    audio.src = url;
+    audio.play();
+  });
+}
+</script>
 
 <script>
 window.addEventListener('DOMContentLoaded', function() {
@@ -102,6 +155,7 @@ function playVoice(text) {
 
   <form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
     <button type="submit">履歴をすべて削除</button>
+
   </form>
 
 
