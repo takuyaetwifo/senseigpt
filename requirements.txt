@@ -6,3 +6,4 @@ gunicorn
 flask-migrate
 dotenv
 pytz
+requests
