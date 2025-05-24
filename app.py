@@ -18,8 +18,11 @@ import pytz
 import re
 import requests
 import io
+import openai
 
 
+
+client = openai.OpenAI()  # ←APIキーは環境変数OPENAI_API_KEYで自動認識される
 
 
 app = Flask(__name__)
@@ -79,35 +82,97 @@ def login_required(f):
 #@app.before_first_request
 #def create_tables():
 #    db.create_all()
-@app.route("/voice", methods=["POST"])
-def voice():
+VOICEVOX_API_BASE = "http://localhost:50021"
+
+
+
+@app.route("/voice_openai", methods=["POST"])
+def voice_openai():
     data = request.json
     text = data.get("text", "")
-    speaker = data.get("speaker", 3)  # 3=ずんだもん
+    # "nova", "alloy", "echo", "fable", "onyx", "shimmer" から選択
+    voice = data.get("voice", "nova")
+    model = data.get("model", "tts-1")  # "tts-1" or "tts-1-hd"
+
+    import openai
+
+    # OpenAI TTS APIで音声生成
+    speech = openai.audio.speech.create(
+        model=model,
+        voice=voice,
+        input=text
+    )
+
+    # mp3として返す
+    return send_file(
+        io.BytesIO(speech.content),
+        mimetype="audio/mpeg",
+        as_attachment=False,
+        download_name="openai_tts.mp3"
+    )
+
+
+
+# @app.route("/voice", methods=["POST"])
+# def voice():
+#     data = request.json
+#     text = data.get("text", "")
+#     speaker = data.get("speaker", 3)  # 例: 3=ずんだもん
+
+#     # VOICEVOX audio_query
+#     query_response = requests.post(
+#         f"{VOICEVOX_API_BASE}/audio_query",
+#         params={"text": text, "speaker": speaker}
+#     )
+#     query_response.raise_for_status()
+#     query = query_response.json()
+
+#     # VOICEVOX synthesis
+#     synth_response = requests.post(
+#         f"{VOICEVOX_API_BASE}/synthesis",
+#         params={"speaker": speaker},
+#         json=query
+#     )
+#     synth_response.raise_for_status()
+
+#     return send_file(
+#         io.BytesIO(synth_response.content),
+#         mimetype="audio/wav",
+#         as_attachment=False,
+#         download_name="zundamon.wav"
+#     )
+    
+    
+    
+#@app.route("/voice", methods=["POST"])
+#def voice():
+#    data = request.json
+#    text = data.get("text", "")
+#    speaker = data.get("speaker", 3)  # 3=ずんだもん
 
     # VOICEVOX audio_query
-    query_response = requests.post(
-        "http://localhost:50021/audio_query",
-        params={"text": text, "speaker": speaker}
-    )
-    query_response.raise_for_status()
-    query = query_response.json()
+#    query_response = requests.post(
+#        "http://localhost:50021/audio_query",
+#        params={"text": text, "speaker": speaker}
+#    )
+#    query_response.raise_for_status()
+#    query = query_response.json()
 
     # VOICEVOX synthesis
-    synth_response = requests.post(
-        "http://localhost:50021/synthesis",
-        params={"speaker": speaker},
-        json=query
-    )
-    synth_response.raise_for_status()
+#    synth_response = requests.post(
+#        "http://localhost:50021/synthesis",
+#        params={"speaker": speaker},
+#        json=query
+#    )
+#    synth_response.raise_for_status()
 
     # バイト配列をメモリ上でwavファイルとして返却
-    return send_file(
-        io.BytesIO(synth_response.content),
-        mimetype="audio/wav",
-        as_attachment=False,
-        download_name="zundamon.wav"
-    )
+#    return send_file(
+#        io.BytesIO(synth_response.content),
+#        mimetype="audio/wav",
+#        as_attachment=False,
+#        download_name="zundamon.wav"
+ #   )
 
 
 @app.route("/")
@@ -263,7 +328,7 @@ def chat():
 
 
         try:
-            response = openai.ChatCompletion.create(
+            response =  client.chat.completions.create(
                 model="gpt-4o",
                 messages=messages,
                 temperature=0.7,

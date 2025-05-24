@@ -46,20 +46,67 @@
 
 
 
-<form method="POST" action="/chat" onsubmit="return handleSend(this);">
-  <input type="text" name="message" required>
-  <button type="submit" id="sendBtn">送信</button>
-  <button id="voice-toggle" type="button" style="margin: 8px 0; font-size: 0.8em;">🔊 音声ON</button>
-  
 
-</form>
+ <form method="POST" action="/chat" onsubmit="return handleSend(this);" style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+  <input type="text" name="message" required style="flex:1; min-width: 160px; font-size: 1.1em; padding: 10px; border-radius: 10px; border: 1px solid #ccc;">
+  <button type="submit" id="sendBtn" style="padding: 12px 24px; font-size: 1.1em; border-radius: 10px; background: #3399ff; color: #fff; border: none;">送信</button>
+</form> 
+
+<!-- 音声テスト用ボタン＋audio要素を追加 -->
+<div style="margin: 24px 0; display: none;">
+  <button onclick="playVoice('こんにちは、テスト音声です')">音声テスト（OpenAI）</button>
+  <audio id="zundamon-audio"></audio>
+</div>
+
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+  const gptMessages = document.querySelectorAll('.message.gpt');
+  if (gptMessages.length > 0) {
+    // 最新の返答メッセージを取得（通常は一番下が最新）
+    const first = gptMessages[0];
+    let firstText = first.innerText
+      .replace(/^先生:\s*/, "")
+      .replace(/📋 コピー.*/, "")
+      .replace(/\n+/g, " ")
+      .trim();
+    playVoice(firstText);
+  }
+});
+
+
+
+ function playVoice(text) {
+  fetch('/voice_openai', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text: text})
+  })
+  .then(res => res.blob())
+  .then(blob => {
+    const url = URL.createObjectURL(blob);
+    const audio = document.getElementById("zundamon-audio");
+    audio.src = url;
+    audio.play();
+  });
+}  
+
+</script>
+
+
+
 
 
   <form action="{{ url_for('clear_chat') }}" method="POST" onsubmit="return confirm('本当に削除しますか？');">
     <button type="submit">履歴をすべて削除</button>
   </form>
 
-<audio id="zundamon-audio"></audio>
+
+
+
+
+
+
+
 
   <div class="chat-log">
     {% if rows %}
@@ -97,53 +144,8 @@ function handleSend(form) {
 
 
 
-
-<script>
-let voiceEnabled = true;  // デフォルトON
-
-document.getElementById('voice-toggle').onclick = function() {
-  voiceEnabled = !voiceEnabled;
-  this.textContent = voiceEnabled ? "🔊 音声ON" : "🔇 音声OFF";
-};
-
-function playVoiceAuto(text) {
-  if (voiceEnabled) {
-    playVoice(text);
-  }
-}
-
-function playVoice(text) {
-  fetch('/voice', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({text: text})
-  })
-  .then(response => response.blob())
-  .then(blob => {
-    const url = URL.createObjectURL(blob);
-    const audio = document.getElementById("zundamon-audio");
-    audio.src = url;
-    audio.play();
-  });
-}
-
-window.addEventListener('DOMContentLoaded', function() {
-  const gptMessages = document.querySelectorAll('.message.gpt');
-  if (gptMessages.length > 0) {
-    const first = gptMessages[0];
-    let firstText = first.innerText
-      .replace(/^先生:\s*/, "")
-      .replace(/📋 コピー.*/,"")
-      .replace(/\n+/g, " ")
-      .trim();
-    playVoiceAuto(firstText);
-  }
-});
-
-
-</script>
-
 <!--
+
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   // 1. localStorageから状態取得（初回はON）
@@ -195,9 +197,9 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+
 -->
-
-
 
 </body>
 </html>

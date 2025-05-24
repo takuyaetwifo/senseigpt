@@ -137,5 +137,11 @@ a:hover {
   100% { transform: rotate(360deg); }
 }
 
+@media (max-width: 600px) {
+  #voice-toggle, #tts-switch {
+    font-size: 1em;
+    padding: 10px;
+  }
+}
 
 
