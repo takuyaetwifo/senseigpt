@@ -270,19 +270,30 @@ def chat():
         birthday_note = ""
         
     family_text = f"家族の状況：{admin.family_status if admin and hasattr(admin, 'family_status') else ''}"
-    system_prompt = f"{profile_text} {family_text} あなたは子どもにやさしく教えるAI先生です。"
+    # system_prompt = f"{profile_text} {family_text} あなたは子どもにやさしく教えるAI先生です。"
 
 
 
    
+    # system_prompt = (
+    #     f"{greeting_message} 今日は{date_str}、{season}です。"
+    #     f"現在の時刻は{time_str}です。"
+    #     f"{profile_text} "
+    #     f"{family_text} "
+    #     f"{birthday_note} "
+    #     "あなたは子どもにやさしく教えるAI先生です。"
+    # )
+    
     system_prompt = (
-        f"{greeting_message} 今日は{date_str}、{season}です。"
+        f"{greeting_message}。今日は{date_str}、{season}です。"
         f"現在の時刻は{time_str}です。"
         f"{profile_text} "
         f"{family_text} "
         f"{birthday_note} "
-        "あなたは子どもにやさしく教えるAI先生です。"
+        "わたしは子どもにやさしく教える**女性のAI先生**です。"
+        "話し方はやさしくて、丁寧で、安心感があるようにしてください。"
     )
+
 
 
 
@@ -314,10 +325,25 @@ def chat():
         
         
     # 過去の履歴（古い順）を追加
-    history = ChatLog.query.filter_by(user_id=session["user_id"]).order_by(ChatLog.id.asc()).limit(5).all()
-    for row in history:
-        messages.append({"role": "user", "content": row.user_input})
+    # ① まず「新しい順」に 10 行だけ取得
+    history = (
+        ChatLog.query
+        .filter_by(user_id=session["user_id"])
+        .order_by(ChatLog.id.desc())   # 新しい順
+        .limit(10)                     # 最新 10 件
+        .all()
+    )
+
+# ② 取得したリストを reverse して「古い順」に並べ替え
+    for row in reversed(history):
+        messages.append({"role": "user",      "content": row.user_input})
         messages.append({"role": "assistant", "content": row.gpt_response})
+
+
+    #history = ChatLog.query.filter_by(user_id=session["user_id"]).order_by(ChatLog.id.asc()).limit(5).all()    
+    #for row in history:
+    #    messages.append({"role": "user", "content": row.user_input})
+    #    messages.append({"role": "assistant", "content": row.gpt_response})
 
         
     if request.method == "POST":

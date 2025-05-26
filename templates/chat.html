@@ -169,6 +169,7 @@ function playVoice(text) {
   <div class="chat-log">
     {% if rows %}
       <ul>
+        
         {% for row in rows %}
           <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
           <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response | safe }}</div>
