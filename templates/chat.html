@@ -4,9 +4,15 @@
   <meta charset="utf-8">
 
   <!-- Prism.js（コード表示の整形用） -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+
+<!-- DOM 読み込み後に 1 回だけ呼ぶ -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => Prism.highlightAll());
+  </script>
+
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 

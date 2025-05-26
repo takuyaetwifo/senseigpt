@@ -19,6 +19,7 @@ import re
 import requests
 import io
 import openai
+import html, re
 
 
 
@@ -48,25 +49,85 @@ NG_WORDS = [
 ]
 
 
-#def format_code_blocks(text):
-#    def replacer(match):
-#        lang = match.group(1) or ""
-#        code = match.group(2)
-#        return f"<pre><code class=\"language-{lang}\">{code}</code></pre>"
-#    return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
 
 
-def format_code_blocks(text):
-    def replacer(match):
-        lang = match.group(1) or ""
-        code = match.group(2)
-        return f'''
-<div class="code-container">
-  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>
-  <pre><code class="language-{lang}">{code}</code></pre>
-</div>
-'''
-    return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
+# def format_code_blocks(text):
+#     def replacer(match):
+#         lang = match.group(1) or ""
+#         code = match.group(2)
+#         return f'''
+# <div class="code-container">
+#   <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>
+#   <pre><code class="language-{lang}">{code}</code></pre>
+# </div>
+# '''
+#     return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
+
+
+# INLINE_CODE = re.compile(r"`([^`\n]+)`")   # 1 行内のインラインコード
+
+# def escape_inline_code(text: str) -> str:
+#     def repl(m):
+#         # &lt; &gt; に変換してから <code> タグに
+#         return f"<code>{html.escape(m.group(1))}</code>"
+#     return INLINE_CODE.sub(repl, text)
+
+
+# CODE_PATTERN = re.compile(
+#     r"```(\w+)?[\r\n]+([\s\S]*?)```",   # 改行があってもなくてもマッチ
+#     flags=re.MULTILINE
+# )
+
+# def format_code_blocks(text: str) -> str:
+#     def repl(m):
+#         lang = m.group(1) or ""
+#         code = html.escape(m.group(2))  # ← **必ずエスケープ**
+#         return (
+#             f'<div class="code-container">'
+#             f'  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>'
+#             f'  <pre><code class="language-{lang}">{code}</code></pre>'
+#             f'</div>'
+#         )
+#     return CODE_PATTERN.sub(repl, text)
+
+
+
+
+
+# ── ❶ 三重バッククォート用 ──────────────────────────────
+CODE_PATTERN = re.compile(
+    r"```(\w+)?[\r\n]+([\s\S]*?)```",  # ```lang\n ... \n```
+    flags=re.MULTILINE
+)
+
+# ── ❷ インライン（単一バッククォート）用 ────────────────
+INLINE_CODE = re.compile(r"`([^`\n]+)`")  # 1 行内の `...`
+
+# ── ❸ まとめて整形する関数 ─────────────────────────────
+def format_code_blocks(text: str) -> str:
+    # ① まず ``` ``` を <pre><code> に変換
+    def block_repl(m):
+        lang = m.group(1) or ""
+        code = html.escape(m.group(2))
+        return (
+            f'<div class="code-container">'
+            f'  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>'
+            f'  <pre><code class="language-{lang}">{code}</code></pre>'
+            f'</div>'
+        )
+    text = CODE_PATTERN.sub(block_repl, text)
+
+    # ② 次に行内 `...` を <code>…</code> に置換してタグ文字を残す
+    def inline_repl(m):
+        return f"<code>{html.escape(m.group(1))}</code>"
+    text = INLINE_CODE.sub(inline_repl, text)
+
+    return text
+
+
+
+
+
 
 
 
