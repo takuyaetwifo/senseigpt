@@ -7,3 +7,4 @@ flask-migrate
 dotenv
 pytz
 requests
+markdown

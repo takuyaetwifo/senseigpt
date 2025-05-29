@@ -3,15 +3,36 @@
 <head>
   <meta charset="utf-8">
 
-  <!-- Prism.js（コード表示の整形用） -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
+   <!-- Prism.js（コード表示の整形用） -->
+ <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
   <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>-->
 
 <!-- DOM 読み込み後に 1 回だけ呼ぶ -->
-  <script>
+  <!--<script>
   document.addEventListener("DOMContentLoaded", () => Prism.highlightAll());
-  </script>
+  </script> -->
+
+
+
+  <!-- Prism dark テーマ + 行番号 -->
+<link  rel="stylesheet"
+       href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css">
+<link  rel="stylesheet"
+       href="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+<!-- 必要な言語だけ追加 -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => Prism.highlightAll());
+</script>
+
 
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -122,15 +143,7 @@ function playVoice(text) {
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   // チャットの最新返答の自動再生
-  const gptMessages = document.querySelectorAll('.message.gpt');
-  if (gptMessages.length > 0) {
-    const first = gptMessages[0];
-    let firstText = first.innerText
-      .replace(/^先生:\s*/, "")
-      .replace(/📋 コピー.*/, "")
-      .replace(/\n+/g, " ")
-      .trim();
-    playVoice(firstText);
+
   }
 
   // iPadで自動再生が効かない場合、初回だけユーザー操作を要求する
@@ -138,20 +151,7 @@ window.addEventListener('DOMContentLoaded', function() {
   // document.getElementById('voiceTestBtn').hidden = false;
 });
 
-function playVoice(text) {
-  fetch('/voice_openai', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({text: text})
-  })
-  .then(res => res.blob())
-  .then(blob => {
-    const url = URL.createObjectURL(blob);
-    const audio = document.getElementById("zundamon-audio");
-    audio.src = url;
-    audio.play();
-  });
-}
+
 </script>
 
 
@@ -172,13 +172,14 @@ function playVoice(text) {
 
 
 
+
   <div class="chat-log">
     {% if rows %}
       <ul>
         
         {% for row in rows %}
           <div class="message user"><strong>あなた:</strong> {{ row.user_input }}</div><br>
-          <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response | safe }}</div>
+          <div class="message gpt"><strong>先生:</strong> {{ row.gpt_response | md2html }}</div>
         {% endfor %}
       </ul>
     {% endif %}

@@ -19,8 +19,10 @@ import re
 import requests
 import io
 import openai
+from markdown import markdown
+from flask import Markup
+from markupsafe import Markup
 import html, re
-
 
 
 client = openai.OpenAI()  # ←APIキーは環境変数OPENAI_API_KEYで自動認識される
@@ -50,81 +52,42 @@ NG_WORDS = [
 
 
 
-
-# def format_code_blocks(text):
-#     def replacer(match):
-#         lang = match.group(1) or ""
-#         code = match.group(2)
-#         return f'''
-# <div class="code-container">
-#   <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>
-#   <pre><code class="language-{lang}">{code}</code></pre>
-# </div>
-# '''
-#     return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
+CODE_RE = re.compile(r"```(\w+)?\n([\s\S]*?)```", flags=re.MULTILINE)
 
 
-# INLINE_CODE = re.compile(r"`([^`\n]+)`")   # 1 行内のインラインコード
+def format_code_blocks(text):
+    def replacer(match):
+        lang = match.group(1) or ""
+        code = html.escape(match.group(2))     # ← 必ずエスケープ
+        #code = match.group(2)
+        return f'''
+<div class="code-container">
+  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>
+  <pre><code class="language-{lang}">{code}</code></pre>
+</div>
+'''
+    return re.sub(r"```(\w+)?\n(.*?)```", replacer, text, flags=re.DOTALL)
 
-# def escape_inline_code(text: str) -> str:
-#     def repl(m):
-#         # &lt; &gt; に変換してから <code> タグに
-#         return f"<code>{html.escape(m.group(1))}</code>"
-#     return INLINE_CODE.sub(repl, text)
-
-
-# CODE_PATTERN = re.compile(
-#     r"```(\w+)?[\r\n]+([\s\S]*?)```",   # 改行があってもなくてもマッチ
-#     flags=re.MULTILINE
-# )
-
-# def format_code_blocks(text: str) -> str:
-#     def repl(m):
-#         lang = m.group(1) or ""
-#         code = html.escape(m.group(2))  # ← **必ずエスケープ**
-#         return (
-#             f'<div class="code-container">'
-#             f'  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>'
-#             f'  <pre><code class="language-{lang}">{code}</code></pre>'
-#             f'</div>'
-#         )
-#     return CODE_PATTERN.sub(repl, text)
-
-
-
-
-
-# ── ❶ 三重バッククォート用 ──────────────────────────────
-CODE_PATTERN = re.compile(
-    r"```(\w+)?[\r\n]+([\s\S]*?)```",  # ```lang\n ... \n```
-    flags=re.MULTILINE
-)
-
-# ── ❷ インライン（単一バッククォート）用 ────────────────
-INLINE_CODE = re.compile(r"`([^`\n]+)`")  # 1 行内の `...`
-
-# ── ❸ まとめて整形する関数 ─────────────────────────────
-def format_code_blocks(text: str) -> str:
-    # ① まず ``` ``` を <pre><code> に変換
-    def block_repl(m):
+def fenced_code_to_html(md_text: str) -> str:
+    def _repl(m):
         lang = m.group(1) or ""
-        code = html.escape(m.group(2))
+        code = html.escape(m.group(2))  # 安全処理
         return (
-            f'<div class="code-container">'
-            f'  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>'
-            f'  <pre><code class="language-{lang}">{code}</code></pre>'
-            f'</div>'
+            '<div class="code-container">'
+            '  <button class="copy-btn" onclick="copyToClipboard(this)">📋 コピー</button>'
+            f'  <pre class="line-numbers"><code class="language-{lang}">{code}</code></pre>'
+            '</div>'
         )
-    text = CODE_PATTERN.sub(block_repl, text)
-
-    # ② 次に行内 `...` を <code>…</code> に置換してタグ文字を残す
-    def inline_repl(m):
-        return f"<code>{html.escape(m.group(1))}</code>"
-    text = INLINE_CODE.sub(inline_repl, text)
-
-    return text
+    return CODE_RE.sub(_repl, md_text)
 
 
+
+
+
+@app.template_filter("md2html")
+def md2html_filter(md_text):
+    md_text = fenced_code_to_html(md_text)  # エスケープ安全処理も追加
+    return Markup(markdown(md_text, extensions=["fenced_code", "tables"]))
 
 
 
@@ -409,7 +372,8 @@ def chat():
         
     if request.method == "POST":
         user_input = request.form["message"]
-        messages.append({"role": "user", "content": user_input})    
+        messages_copy = messages + [{"role": "user", "content": user_input}]
+        #messages.append({"role": "user", "content": user_input})    
         
 
 
@@ -417,11 +381,17 @@ def chat():
         try:
             response =  client.chat.completions.create(
                 model="gpt-4o",
-                messages=messages,
+                messages=messages_copy,
+             #   messages=messages,
                 temperature=0.7,
                 max_tokens=1000
             )
             main_reply = response.choices[0].message.content
+            
+            
+            # c) ローカル履歴にも追加
+            messages.append({"role": "user", "content": user_input})
+         #   messages.append({"role": "assistant", "content": gpt_response})
             
             formatted_reply = format_code_blocks(main_reply)  # ← 追加
 
@@ -530,7 +500,7 @@ LESSONS = [
     "今日の英単語：『sun』 - 太陽のことだよ！",
     "今日のことわざ：『石の上にも三年』 - がまんすれば結果が出るってこと！",
     "今日の算数：『2×3=6』 - 2を3回たすと6になるよ！",
-    "今日の生き物：『カブトムシ』 - つのがかっこいい昆虫！"
+    "今日の生き物：『カブトムシ』 - つのがかっこいい昆虫！",
     "今日の漢字：『空』 - そらのことだよ。雲や星が見えるね！",
     "今日の英単語：『book』 - 本のことだよ。たくさん読もう！",
     "今日のことわざ：『七転び八起き』 - 何度失敗してもがんばれば大丈夫！",
